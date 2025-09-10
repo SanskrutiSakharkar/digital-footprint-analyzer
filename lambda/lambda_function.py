@@ -18,6 +18,10 @@ def lambda_handler(event, context):
             records = records['accounts']
         elif isinstance(records, dict):
             records = [records]
+        elif isinstance(records, list):
+            pass  # records is already a list!
+        else:
+            records = []  # empty fallback
     except Exception:
         try:
             file_io = io.StringIO(file_content.decode('utf-8'))
