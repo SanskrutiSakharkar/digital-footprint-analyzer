@@ -1,0 +1,38 @@
+[
+  {
+    "Service": "Facebook",
+    "SignupDate": "2012-06-15",
+    "Category": "Social Media",
+    "LastPasswordUpdate": "2023-01-01",
+    "LastLogin": "2022-03-01"
+  },
+  {
+    "Service": "Amazon",
+    "SignupDate": "2015-08-20",
+    "Category": "E-Commerce",
+    "LastPasswordUpdate": "2021-07-15",
+    "LastLogin": "2023-06-15"
+  },
+  {
+    "Service": "LinkedIn",
+    "SignupDate": "2017-03-10",
+    "Category": "Professional Networking",
+    "LastPasswordUpdate": "2024-02-20",
+    "LastLogin": "2024-02-21"
+  },
+  {
+    "Service": "OldForum",
+    "SignupDate": "2010-01-10",
+    "Category": "Other",
+    "LastPasswordUpdate": "2011-01-10",
+    "LastLogin": "2013-05-05"
+  },
+  {
+    "Service": "Instagram",
+    "SignupDate": "2019-11-30",
+    "Category": "Social Media",
+    "LastPasswordUpdate": "2024-03-01",
+    "LastLogin": "2024-03-01"
+  }
+]
+
