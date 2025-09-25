@@ -31,12 +31,6 @@
 - **Deployment:** AWS S3 (static website hosting)
 - **Security:** JWT-based authentication, no data stored long-term
 
-## Live Demo
-
-[Try the Live App]: http://digital-footprint-analyzer.s3-website-us-east-1.amazonaws.com/
-
----
-
 ## Features
 
 - **Upload** your `.csv` or `.json` account data securely (AWS Cognito + Lambda + API Gateway backend)
@@ -107,4 +101,9 @@ src/
       **Auth:** AWS Cognito
       
       **APIs:** Secure REST endpoints
+
+** Live Demo**
+
+http://digital-footprint-analyzer.s3-website-us-east-1.amazonaws.com/
+
 
