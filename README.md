@@ -33,7 +33,7 @@
 
 ## Live Demo
 
-[Try the Live App]: (http://digital-footprint-analyzer.s3-website-us-east-1.amazonaws.com/)
+[Try the Live App]: http://digital-footprint-analyzer.s3-website-us-east-1.amazonaws.com/
 
 ---
 
