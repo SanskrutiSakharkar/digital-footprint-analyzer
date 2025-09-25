@@ -1,0 +1,152 @@
+.upload-form-bg, .upload-bg {
+  background: transparent;
+  min-height: 90vh;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 4rem;
+}
+
+/* --- UPLOAD CARD --- */
+.upload-card {
+  padding: 2.2rem 2rem;
+  border-radius: 22px;
+  box-shadow: 0 8px 36px 0 rgba(56,189,248,0.10), 0 1.5px 24px 0 rgba(37,99,235,0.08);
+  max-width: 480px;
+  width: 100%;
+  margin: 0 auto;
+  margin-bottom: 3.5rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #38bdf8;           /* Blue outline */
+  transition: border 0.17s, box-shadow 0.2s;
+  background: #fff;
+}
+.upload-card:hover, .upload-card:focus-within {
+  border: 2.5px solid #2563eb;         /* Deeper blue on hover */
+  box-shadow: 0 12px 52px 0 rgba(56,189,248,0.14);
+}
+
+.upload-card .upload-icon {
+  color: #f8b500;
+  font-size: 2.2rem;
+  margin-bottom: 0.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.upload-card h2, .upload-card h3 {
+  margin: 0.2em 0 1.1em 0;
+  font-weight: 700;
+  text-align: center;
+  width: 100%;
+  color: #22223B;
+}
+
+.upload-card p, 
+.upload-card label, 
+.upload-card div {
+  text-align: center;
+  width: 100%;
+  color: #22223B;
+}
+
+.dropzone {
+  background: #f8fafc;
+  border: 2px dashed #38bdf8;
+  border-radius: 12px;
+  padding: 2rem 1.2rem;
+  margin-bottom: 1.1rem;
+  transition: border 0.17s, background 0.17s;
+  color: #475569;
+}
+
+.dropzone.active {
+  border-color: #2563eb;
+  background: #e0f2fe;
+  color: #2563eb;
+}
+
+.browse-btn, .manual-upload-label {
+  color: #2563eb;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.file-details {
+  margin-top: 1.2rem;
+  text-align: left;
+}
+
+.file-name {
+  color: #475569;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.progress-bar-outer {
+  background: #e0e7ef;
+  border-radius: 6px;
+  margin-top: 0.7rem;
+  height: 9px;
+  width: 100%;
+  overflow: hidden;
+}
+.progress-bar-inner {
+  background: #38bdf8;
+  height: 100%;
+  width: 0;
+  transition: width 0.26s;
+}
+
+.upload-status.success {
+  color: #059669;
+  font-weight: 600;
+  margin-top: 0.7rem;
+}
+.upload-status.error {
+  color: #dc2626;
+  font-weight: 600;
+  margin-top: 0.7rem;
+}
+
+.result-area.error {
+  color: #dc2626;
+  margin-top: 1.2rem;
+}
+
+/* --- FOOTER --- */
+.footer {
+  width: 100%;
+  text-align: center;
+  padding: 1.1rem 0 1.2rem 0;
+  color: #475569;
+  background: transparent;
+  font-size: 1.09rem;
+  font-weight: 500;
+  margin-top: 3rem;
+  letter-spacing: 0.01em;
+}
+
+.footer a {
+  color: #2563eb;
+  text-decoration: underline;
+  font-weight: 600;
+  transition: color 0.16s;
+}
+.footer a:hover {
+  color: #38bdf8;
+}
+
+@media (max-width: 650px) {
+  .upload-card {
+    padding: 1.2rem 0.5rem 1.6rem 0.5rem;
+    min-width: unset;
+    max-width: 99vw;
+    border-radius: 15px;
+  }
+}

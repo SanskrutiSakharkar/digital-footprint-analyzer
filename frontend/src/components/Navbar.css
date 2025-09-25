@@ -1,0 +1,104 @@
+/* Main navbar container */
+.nav {
+  background: #fff;
+  border-bottom: 2px solid #2563eb;   /* Blue-Sky Tech */
+  padding: 1.05rem 0;
+  position: sticky;
+  top: 0;
+  z-index: 99;
+  box-shadow: 0 2px 20px rgba(37,99,235,0.05);
+}
+
+/* Row for content alignment */
+.nav-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2.2rem;
+}
+
+/* Brand/logo styling */
+.brand {
+  font-weight: 900;
+  color: #2563EB;
+  font-size: 2.05rem;
+  letter-spacing: -0.01em;
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.brand-dot {
+  width: 13px;
+  height: 13px;
+  background: #38BDF8;
+  border-radius: 50%;
+  margin-right: 0.7rem;
+  display: inline-block;
+}
+
+/* Navigation links */
+.links {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex: 1;
+  gap: 2.3rem;
+}
+
+.links a {
+  color: #475569;
+  font-weight: 700;
+  font-size: 1.12rem;
+  padding-bottom: 3px;
+  border-bottom: 2px solid transparent;
+  text-decoration: none;
+  transition: color 0.17s, border 0.18s;
+}
+
+.links a.active,
+.links a:focus {
+  color: #2563eb;
+  border-bottom: 2px solid #38bdf8;
+  background: transparent;
+}
+
+.links a:hover {
+  color: #38bdf8;
+  border-bottom: 2px solid #38bdf8;
+}
+
+/* Responsive: stack links if needed on small screens */
+@media (max-width: 640px) {
+  .nav-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.8rem;
+  }
+  .links {
+    gap: 1.3rem;
+  }
+}
+/* Navbar.css */
+
+.brand-logo {
+  width: 80px;       
+  height: 80px;      
+  object-fit: contain;
+  border-radius: 12px;   /* a little rounder */
+  box-shadow: 0 2px 8px rgba(56,189,248,0.09);
+  background: #fff;
+  padding: 3px;
+  margin-right: 0.5rem;  /* optional, for spacing */
+  /* Remove vertical align if you use flex, it's not needed */
+}
+
+.brand-text {
+  font-size: 2.6rem;       /* keep large if you like the look! */
+  font-weight: 800;
+  color: #2563eb;
+  letter-spacing: 0.01em;
+  font-family: inherit;
+}

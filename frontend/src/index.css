@@ -1,0 +1,84 @@
+:root {
+  --bg-main: #f8fafc;
+  --bg-card: #f1f5f9;
+  --accent: #2563EB;
+  --accent-soft: #38BDF8;
+  --text-main: #22223B;
+  --text-secondary: #475569;
+  --text-muted: #94A3B8;
+}
+
+body, html {
+  margin: 0;
+  min-height: 100vh;
+  background: linear-gradient(120deg, #f8fafc 80%, #e0f2fe 100%);
+  color: var(--text-main);
+  font-family: 'Inter', system-ui, Arial, sans-serif;
+  font-size: 16px;
+  letter-spacing: 0.01em;
+  line-height: 1.6;
+  scroll-behavior: smooth;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+  transition: color 0.16s;
+}
+a:hover {
+  color: var(--accent-soft);
+  text-decoration: underline;
+}
+
+/* Card style for all cards */
+.card, .feature-card, .about-mission, .profile-card, .upload-card, .report-card, .section-bg {
+  background: var(--bg-card);
+  border-radius: 16px;
+  box-shadow: 0 4px 28px rgba(56,189,248,0.09);
+  border: 1px solid #e0e7ef;
+}
+
+/* Accent section for top banner if needed */
+.header-accent {
+  height: 7px;
+  width: 100%;
+  background: linear-gradient(90deg, #2563EB 0%, #38BDF8 100%);
+  border-radius: 0 0 7px 7px;
+  margin-bottom: 0.6rem;
+}
+
+/* Blue SaaS section background */
+.section-bg {
+  background: #f1f5f9;
+  border-radius: 28px;
+  margin: 0 auto 2.5rem;
+  padding: 2.5rem 2rem 2rem;
+  box-shadow: 0 4px 32px rgba(56,189,248,0.10);
+  max-width: 1200px;
+}
+
+h1, h2, .highlight {
+  color: var(--accent);
+  font-weight: 800;
+}
+
+:root {
+  --chart-accent: #2563EB;
+  --chart-accent-soft: #38BDF8;
+  --chart-secondary: #475569;
+  --chart-muted: #94A3B8;
+  --chart-success: #10b981;
+  --chart-warning: #fbbf24;
+  --chart-danger: #ef4444;
+}
+
+.chart-bar-primary   { fill: var(--chart-accent); }
+.chart-bar-secondary { fill: var(--chart-accent-soft); }
+.chart-bar-muted     { fill: var(--chart-muted); }
+.chart-bar-green     { fill: var(--chart-success); }
+.chart-bar-yellow    { fill: var(--chart-warning); }
+.chart-bar-red       { fill: var(--chart-danger); }

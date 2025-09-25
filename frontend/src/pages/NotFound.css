@@ -1,0 +1,34 @@
+.notfound-bg {
+  background: transparent;
+  min-height: 90vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.notfound-card {
+  border-radius: 13px;
+  box-shadow: 0 4px 24px rgba(56,189,248,0.10);
+  padding: 3rem 2.7rem;
+  text-align: center;
+  max-width: 420px;
+  margin: 0 auto;
+  background: #f1f5f9;
+}
+
+.notfound-icon {
+  font-size: 3.5rem;
+  color: var(--accent-soft);
+  margin-bottom: 1.3rem;
+}
+
+.notfound-card h2 {
+  color: var(--accent);
+  margin-bottom: 1rem;
+  font-weight: 800;
+}
+
+.notfound-help {
+  color: var(--text-muted);
+  margin-top: 1.5rem;
+}
