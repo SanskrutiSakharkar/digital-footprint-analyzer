@@ -100,11 +100,11 @@ src/
       
 7. **Production Architecture**
 
-**Frontend**: React (static site on S3)
-
-**Backend:** Serverless (Lambda, API Gateway)
-
-**Auth:** AWS Cognito
-
-**APIs:** Secure REST endpoints
+      **Frontend**: React (static site on S3)
+      
+      **Backend:** Serverless (Lambda, API Gateway)
+      
+      **Auth:** AWS Cognito
+      
+      **APIs:** Secure REST endpoints
 
