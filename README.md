@@ -102,7 +102,7 @@ src/
       
       **APIs:** Secure REST endpoints
 
-** Live Demo**
+**Live Demo**
 
 http://digital-footprint-analyzer.s3-website-us-east-1.amazonaws.com/
 
