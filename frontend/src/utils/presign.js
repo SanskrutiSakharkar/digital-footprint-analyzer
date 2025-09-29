@@ -1,7 +1,7 @@
 // utils/presign.js
 export async function getPresignedUrl(filename, contentType) {
   const apiEndpoint = "https://tw3uu6mzw9.execute-api.us-east-1.amazonaws.com/Prod/presign";
-  const url = `${apiEndpoint}/presign?filename=${encodeURIComponent(filename)}&contentType=${encodeURIComponent(contentType)}`;
+  const url = `${apiEndpoint}?filename=${encodeURIComponent(filename)}&contentType=${encodeURIComponent(contentType)}`;
 
   let response, data;
   try {
@@ -25,12 +25,6 @@ export async function getPresignedUrl(filename, contentType) {
     throw new Error("Invalid JSON returned from presign API");
   }
 
-  // Parse the body if wrapped in a JSON string
-  if (data.body) {
-    data = JSON.parse(data.body);
-  }
-
   if (!data.uploadUrl) throw new Error("No uploadUrl in presign API response");
-
   return data.uploadUrl;
 }

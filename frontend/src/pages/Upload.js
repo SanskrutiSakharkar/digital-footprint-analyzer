@@ -1,3 +1,4 @@
+// pages/Upload.js
 import React, { useState } from "react";
 import { getPresignedUrl } from "../utils/presign";
 
@@ -25,9 +26,12 @@ export default function Upload() {
 
     try {
       const contentType = file.type || "application/octet-stream";
+
+      // 1️⃣ Get presigned URL
       const presignedUrl = await getPresignedUrl(file.name, contentType);
 
       setMessage("Uploading file to S3...");
+      // 2️⃣ Upload the file
       const result = await fetch(presignedUrl, {
         method: "PUT",
         headers: { "Content-Type": contentType },
@@ -39,8 +43,9 @@ export default function Upload() {
       }
 
       setMessage("File uploaded! Waiting for report...");
-      pollForReport(file.name);
+      pollForReport(file.name); // 3️⃣ Start polling S3 for report
       setFile(null);
+
     } catch (err) {
       console.error("Upload error:", err);
       setMessage(`Upload failed: ${err.message}`);
@@ -49,6 +54,7 @@ export default function Upload() {
     }
   };
 
+  // 4️⃣ Poll for the report in S3 (retry up to 10 times)
   const pollForReport = async (filename, attempt = 0) => {
     if (!filename || attempt > 10) {
       setMessage("Report not ready after multiple attempts.");
