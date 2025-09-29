@@ -2,8 +2,6 @@
 import React, { useState } from "react";
 import { getPresignedUrl } from "../utils/presign";
 
-const ANALYZE_API_URL = "https://<your-analyze-api>.execute-api.us-east-1.amazonaws.com/Prod/analyze";
-
 export default function Upload() {
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
@@ -17,10 +15,7 @@ export default function Upload() {
   };
 
   const handleUpload = async () => {
-    if (!file) {
-      alert("Please choose a file first.");
-      return;
-    }
+    if (!file) return alert("Please choose a file first.");
 
     setUploading(true);
     setMessage("Getting presigned URL...");
@@ -28,40 +23,18 @@ export default function Upload() {
 
     try {
       const contentType = file.name.endsWith(".csv") ? "text/csv" : "application/json";
-      // 1️⃣ Get presigned URL
       const presignedUrl = await getPresignedUrl(file.name, contentType);
 
       setMessage("Uploading file to S3...");
-      // 2️⃣ Upload the file to S3
       const uploadResult = await fetch(presignedUrl, {
         method: "PUT",
         headers: { "Content-Type": contentType },
         body: file,
       });
-      if (!uploadResult.ok) {
-        throw new Error(`Upload failed: ${uploadResult.status}`);
-      }
+      if (!uploadResult.ok) throw new Error(`Upload failed: ${uploadResult.status}`);
 
-      setMessage("File uploaded! Triggering analysis...");
-
-      // 3️⃣ Trigger analyze Lambda (optional if S3 event triggers it)
-      const analyzeRes = await fetch(ANALYZE_API_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          // Replace with actual Cognito token if needed
-          // "Authorization": idToken
-        },
-        body: JSON.stringify({ filename: file.name }),
-      });
-
-      if (!analyzeRes.ok) {
-        throw new Error(`Analyze API failed: ${analyzeRes.status}`);
-      }
-
-      setMessage("Analysis started. Waiting for report...");
-      pollForReport(file.name); // 4️⃣ Start polling for the report
-
+      setMessage("File uploaded! Waiting for report...");
+      pollForReport(file.name);
       setFile(null);
     } catch (err) {
       console.error("Upload error:", err);
@@ -71,7 +44,6 @@ export default function Upload() {
     }
   };
 
-  // 4️⃣ Poll S3 for the report (retry up to 10 times)
   const pollForReport = async (filename, attempt = 0) => {
     if (!filename || attempt > 10) {
       setMessage("Report not ready after multiple attempts.");
