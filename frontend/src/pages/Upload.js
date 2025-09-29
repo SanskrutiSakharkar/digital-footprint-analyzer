@@ -1,4 +1,3 @@
-// pages/Upload.js
 import React, { useState } from "react";
 import { getPresignedUrl } from "../utils/presign";
 
@@ -15,35 +14,31 @@ export default function Upload() {
   };
 
   const handleUpload = async () => {
-    if (!file) {
-      alert("Please choose a file first.");
-      return;
-    }
+    if (!file) return alert("Please choose a file first.");
 
     setUploading(true);
     setMessage("Getting presigned URL...");
     setReportData(null);
 
     try {
+      // Ensure Content-Type is correct
       const contentType = file.type || "application/octet-stream";
 
-      // 1️⃣ Get presigned URL
+      // 1️⃣ Get presigned URL from Lambda
       const presignedUrl = await getPresignedUrl(file.name, contentType);
 
       setMessage("Uploading file to S3...");
-      // 2️⃣ Upload the file
+      // 2️⃣ Upload the file to S3
       const result = await fetch(presignedUrl, {
         method: "PUT",
         headers: { "Content-Type": contentType },
         body: file,
       });
 
-      if (!result.ok) {
-        throw new Error(`Upload failed: ${result.status}`);
-      }
+      if (!result.ok) throw new Error(`Upload failed: ${result.status}`);
 
       setMessage("File uploaded! Waiting for report...");
-      pollForReport(file.name); // 3️⃣ Start polling S3 for report
+      pollForReport(file.name); // 3️⃣ Poll for JSON report
       setFile(null);
 
     } catch (err) {
@@ -54,7 +49,6 @@ export default function Upload() {
     }
   };
 
-  // 4️⃣ Poll for the report in S3 (retry up to 10 times)
   const pollForReport = async (filename, attempt = 0) => {
     if (!filename || attempt > 10) {
       setMessage("Report not ready after multiple attempts.");
@@ -72,7 +66,7 @@ export default function Upload() {
       } else {
         setTimeout(() => pollForReport(filename, attempt + 1), 3000);
       }
-    } catch (err) {
+    } catch {
       setTimeout(() => pollForReport(filename, attempt + 1), 3000);
     }
   };
