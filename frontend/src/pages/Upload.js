@@ -1,12 +1,13 @@
-// Upload.js
+// src/components/Upload.js
 import React, { useState, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import { FaCloudUploadAlt } from "react-icons/fa";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import "./Upload.css"; // style your dropzone + progress
+import "./Upload.css";
 
-const PRESIGNED_API = "https://bc3gkr4896.execute-api.us-east-1.amazonaws.com/Dev/generate-presigned-url";
+// ✅ Set to your deployed presign API Gateway endpoint
+const PRESIGNED_API = "https://ckbvqpr5s4.execute-api.us-east-1.amazonaws.com/prod/presign";
 
 export default function Upload() {
   const [fileName, setFileName] = useState("");
@@ -20,16 +21,14 @@ export default function Upload() {
     setUploadProgress(10);
 
     try {
-      // Step 1: Get pre-signed URL from API
-      const presignedRes = await fetch(`${PRESIGNED_API}?filename=${encodeURIComponent(file.name)}&contentType=${file.type}`);
-      if (!presignedRes.ok) throw new Error("Presigned URL generation failed");
+      const res = await fetch(`${PRESIGNED_API}?filename=${encodeURIComponent(file.name)}&contentType=${file.type}`);
+      if (!res.ok) throw new Error("Presigned URL request failed");
 
-      const { uploadUrl, key } = await presignedRes.json();
-      setUploadStatus("Uploading file to S3...");
+      const { uploadUrl } = await res.json();
+      setUploadStatus("Uploading to S3...");
       setUploadProgress(40);
 
-      // Step 2: Upload file directly to S3 using pre-signed URL
-      const s3UploadRes = await fetch(uploadUrl, {
+      const s3Res = await fetch(uploadUrl, {
         method: "PUT",
         headers: {
           "Content-Type": file.type
@@ -37,17 +36,14 @@ export default function Upload() {
         body: file
       });
 
-      if (!s3UploadRes.ok) throw new Error(`Upload to S3 failed: ${s3UploadRes.status}`);
+      if (!s3Res.ok) throw new Error(`S3 Upload failed: ${s3Res.status}`);
 
       setUploadProgress(100);
-      setUploadStatus("✅ Upload complete! Processing will begin shortly...");
-
-      // Redirect after short delay
-      setTimeout(() => navigate("/history"), 1500);
-
-    } catch (error) {
-      console.error("Upload failed:", error);
-      setUploadStatus("❌ Upload failed. Please try again.");
+      setUploadStatus("✅ Uploaded! Processing started via Lambda.");
+      setTimeout(() => navigate("/history"), 2000);
+    } catch (err) {
+      console.error(err);
+      setUploadStatus("❌ Upload failed. Try again.");
       setUploadProgress(0);
     }
   }, [navigate]);
@@ -76,7 +72,7 @@ export default function Upload() {
 
         <div {...getRootProps()} className={`dropzone ${isDragActive ? "active" : ""}`}>
           <input {...getInputProps()} />
-          <p>{isDragActive ? "Drop the file here..." : "Drag & drop .csv or .json file here, or click to select"}</p>
+          <p>{isDragActive ? "Drop the file here..." : "Drag & drop .csv or .json here, or click to select"}</p>
         </div>
 
         {fileName && (
