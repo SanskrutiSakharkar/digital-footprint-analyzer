@@ -8,7 +8,6 @@ import { useNavigate } from "react-router-dom";
 
 const API_URL = "https://bsd4wq8vc7.execute-api.us-east-1.amazonaws.com/Dev/";
 
-/** Save snapshot automatically so Compare can find it */
 function saveAnalysisSnapshot(name, metrics, meta = {}) {
   const id = (crypto?.randomUUID?.() || `${Date.now()}_${Math.random()}`);
   const payload = { __kind: "cloud-footprint-analysis", id, name, createdAt: Date.now(), metrics, meta };
@@ -42,52 +41,55 @@ export default function Upload() {
     const content = await file.text();
 
     try {
-      // --- For local .json test uploads, skip API ---
+      let data = null;
+
+      // Local test: if uploading .json, parse directly.
       if (file.name.endsWith(".json")) {
-        const data = JSON.parse(content);
-        setResult(data);
-        localStorage.setItem("lastAnalysis", JSON.stringify(data));
-        saveAnalysisSnapshot(`Upload ${new Date().toLocaleString()}`, data, { source: "upload-local" });
-        setProgress(100);
-        setTimeout(() => {
-          setUploadStatus("success");
-          navigate("/report", { state: { analysis: data } });
-        }, 300);
-        return;
+        data = JSON.parse(content);
+      } else {
+        // CSV or prod .json: send to Lambda API
+        const { tokens } = await fetchAuthSession();
+        const idToken = tokens?.idToken?.toString();
+        if (!idToken) throw new Error("No ID token found. Please sign in first.");
+
+        const claims = decodeJwtClaims(idToken);
+        console.log("JWT claims:", claims);
+
+        const response = await fetch(API_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": file.name.endsWith(".csv") ? "text/csv" : "application/json",
+            "Authorization": idToken,
+          },
+          body: content,
+        });
+
+        setProgress(70);
+
+        if (!response.ok) {
+          let bodyText = "";
+          try { bodyText = await response.text(); } catch {}
+          throw new Error(`Upload failed: ${response.status} ${response.statusText} ${bodyText}`);
+        }
+
+        // Lambda might return { body: "{...}" } -- handle this case
+        const resp = await response.json();
+        if (resp.body) {
+          try { data = JSON.parse(resp.body); } catch { data = resp.body; }
+        } else {
+          data = resp;
+        }
       }
 
-      // --- For .csv or prod .json: send to API ---
-      const { tokens } = await fetchAuthSession();
-      const idToken = tokens?.idToken?.toString();
-      if (!idToken) throw new Error("No ID token found. Please sign in first.");
-
-      const claims = decodeJwtClaims(idToken);
-      console.log("JWT claims:", claims);
-
-      const response = await fetch(API_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": file.name.endsWith(".csv") ? "text/csv" : "application/json",
-          "Authorization": idToken,
-        },
-        body: content,
-      });
-
-      setProgress(70);
-
-      if (!response.ok) {
-        let bodyText = "";
-        try { bodyText = await response.text(); } catch {}
-        throw new Error(`Upload failed: ${response.status} ${response.statusText} ${bodyText}`);
-      }
-
-      const data = await response.json();
+      // Save result for compare/history, show in Report
       setResult(data);
       localStorage.setItem("lastAnalysis", JSON.stringify(data));
       saveAnalysisSnapshot(`Upload ${new Date().toLocaleString()}`, data, { source: "upload" });
       setProgress(100);
+
       setTimeout(() => {
         setUploadStatus("success");
+        // Send to /report with analysis in state
         navigate("/report", { state: { analysis: data } });
       }, 300);
 
@@ -142,7 +144,7 @@ export default function Upload() {
             {progress === 100 && (
               <div className={`upload-status ${uploadStatus}`}>
                 {uploadStatus === "success" ? "Upload successful! 🎉" :
-                 uploadStatus === "error"   ? "Upload failed. Try again." : ""}
+                  uploadStatus === "error" ? "Upload failed. Try again." : ""}
               </div>
             )}
           </div>

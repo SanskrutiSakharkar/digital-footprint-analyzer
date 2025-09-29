@@ -7,9 +7,14 @@ import { FaDownload, FaKey, FaUserClock, FaExclamationCircle, FaChartPie, FaLigh
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { motion } from "framer-motion";
+import { useLocation } from "react-router-dom";
 import "./Report.css";
 
-// Demo fallback (replace with prop/real data if passed)
+const PALETTE = [
+  "#2563eb", "#38bdf8", "#fbbf24", "#ef4444", "#0ea5e9", "#b6d0fa", "#14213d", "#fca311", "#0d9488"
+];
+
+// Fallback if nothing is uploaded (for demo)
 const FALLBACK_ANALYSIS = {
   total_accounts: 19,
   oldest_account: "2012-03-12",
@@ -27,59 +32,71 @@ const FALLBACK_ANALYSIS = {
   ]
 };
 
-const PALETTE = [
-  "#2563eb", "#38bdf8", "#fbbf24", "#ef4444", "#0ea5e9", "#b6d0fa", "#14213d", "#fca311", "#0d9488",
-];
+export default function Report(props) {
+  // 1. Get report data: navigation, props, or localStorage fallback
+  const location = useLocation();
+  const navAnalysis = location.state?.analysis;
+  const propAnalysis = props.analysis;
+  let lsAnalysis = null;
+  try { lsAnalysis = JSON.parse(localStorage.getItem("lastAnalysis") || "{}"); } catch {}
+  const analysis =
+    navAnalysis && typeof navAnalysis === "object" && Object.keys(navAnalysis).length > 0 ? navAnalysis :
+    propAnalysis && typeof propAnalysis === "object" && Object.keys(propAnalysis).length > 0 ? propAnalysis :
+    lsAnalysis && typeof lsAnalysis === "object" && Object.keys(lsAnalysis).length > 0 ? lsAnalysis :
+    FALLBACK_ANALYSIS;
 
-export default function Report({ analysis }) {
-  // Choose real analysis or fallback
-  const reportData = analysis || FALLBACK_ANALYSIS;
+  // 2. Memoize all objects for chart/data useMemo calls
+  const pwdWarnings = useMemo(() => analysis.password_hygiene_warnings || [], [analysis]);
+  const inactiveAccounts = useMemo(() => analysis.inactive_accounts || [], [analysis]);
+  const riskBreakdown = useMemo(() => analysis.risk_breakdown || { Low: 0, Medium: 0, High: 0 }, [analysis]);
+  const accountAges = useMemo(() => analysis.account_age_distribution || {}, [analysis]);
+  const accountsByCategory = useMemo(() => analysis.accounts_by_category || {}, [analysis]);
+  const insights = useMemo(() => analysis.insights || [], [analysis]);
 
-  // Data hooks
-  const categoriesData = useMemo(() => {
-    const obj = reportData.accounts_by_category || {};
-    return Object.entries(obj).map(([name, value], i) => ({
+  // 3. All chart/section data
+  const categoriesData = useMemo(() => (
+    Object.entries(accountsByCategory).map(([name, value], i) => ({
       name, value, color: PALETTE[i % PALETTE.length]
-    }));
-  }, [reportData]);
+    }))
+  ), [accountsByCategory]);
 
   const riskData = useMemo(() =>
-    Object.entries(reportData.risk_breakdown || {}).map(([level, value]) => ({
+    Object.entries(riskBreakdown).map(([level, value]) => ({
       name: level,
       value,
       color: level === "High" ? "#ef4444" : level === "Medium" ? "#fbbf24" : "#22c55e"
-    })), [reportData]
+    })), [riskBreakdown]
   );
 
   const ageData = useMemo(() =>
-    Object.entries(reportData.account_age_distribution || {}).map(([k, v]) => ({
+    Object.entries(accountAges).map(([k, v]) => ({
       age: k, count: v
-    })), [reportData]
+    })), [accountAges]
   );
 
   const yearData = useMemo(() => {
-    const obj = reportData.accounts_per_year || {};
+    const obj = analysis.accounts_per_year || {};
     const rows = Object.entries(obj).map(([year, count]) => ({ year: String(year), count }));
     rows.sort((a, b) => Number(a.year) - Number(b.year));
     return rows;
-  }, [reportData]);
+  }, [analysis]);
 
-  // Highlights row
+  // 4. Highlights row
   const highlights = [
-    { icon: <FaUserClock color="#fca311" />, label: "Oldest Account", value: reportData.oldest_account || "—" },
-    { icon: <FaKey color="#2563eb" />, label: "Password Warnings", value: (reportData.password_hygiene_warnings || []).length },
-    { icon: <FaExclamationCircle color="#ef4444" />, label: "Inactive Accounts", value: (reportData.inactive_accounts || []).length },
-    { icon: <FaChartPie color="#0d9488" />, label: "Top Category", value: Object.keys(reportData.accounts_by_category || {})[0] || "—" }
+    { icon: <FaUserClock color="#fca311" />, label: "Oldest Account", value: analysis.oldest_account || "—" },
+    { icon: <FaKey color="#2563eb" />, label: "Password Warnings", value: pwdWarnings.length },
+    { icon: <FaExclamationCircle color="#ef4444" />, label: "Inactive Accounts", value: inactiveAccounts.length },
+    { icon: <FaChartPie color="#0d9488" />, label: "Top Category", value: Object.keys(accountsByCategory || {})[0] || "—" }
   ];
 
-  // CSV/PDF export
+  // 5. CSV/PDF export
   const reportRef = useRef();
   const downloadCSV = () => {
     const csv = [
       "Metric,Value",
-      "Total Accounts," + reportData.total_accounts,
-      "Oldest Account," + reportData.oldest_account,
-      "Risk Avg," + reportData.risk_average,
+      "Total Accounts," + analysis.total_accounts,
+      "Oldest Account," + analysis.oldest_account,
+      "Risk Avg," + analysis.risk_average,
     ].join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
@@ -97,8 +114,7 @@ export default function Report({ analysis }) {
     pdf.addImage(imgData, "PNG", 0, 20, canvas.width * ratio, canvas.height * ratio);
     pdf.save("analysis-report.pdf");
   }
-
-  // Export list (password/inactive)
+  // Export password/inactive lists
   const exportList = (items, file) => {
     const csv = items.map(x => `"${x}"`).join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
@@ -116,11 +132,11 @@ export default function Report({ analysis }) {
         <motion.section className="report-header" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
           <h2 className="report-title">Your Analysis Report</h2>
           <div className="scorecards">
-            <div className="scorecard"><div className="k">Total</div><div className="v">{reportData.total_accounts}</div></div>
-            <div className="scorecard"><div className="k">Oldest</div><div className="v">{reportData.oldest_account}</div></div>
-            <div className="scorecard"><div className="k">Pwd Warn</div><div className="v">{reportData.password_hygiene_warnings.length}</div></div>
-            <div className="scorecard"><div className="k">Inactive</div><div className="v">{reportData.inactive_accounts.length}</div></div>
-            <div className="scorecard"><div className="k">Risk Avg</div><div className="v">{reportData.risk_average}</div></div>
+            <div className="scorecard"><div className="k">Total</div><div className="v">{analysis.total_accounts}</div></div>
+            <div className="scorecard"><div className="k">Oldest</div><div className="v">{analysis.oldest_account}</div></div>
+            <div className="scorecard"><div className="k">Pwd Warn</div><div className="v">{pwdWarnings.length}</div></div>
+            <div className="scorecard"><div className="k">Inactive</div><div className="v">{inactiveAccounts.length}</div></div>
+            <div className="scorecard"><div className="k">Risk Avg</div><div className="v">{analysis.risk_average}</div></div>
           </div>
           <div className="highlights-row">
             {highlights.map((h, i) => (
@@ -146,10 +162,11 @@ export default function Report({ analysis }) {
               <h4>Account Type Share</h4>
               <ResponsiveContainer width="100%" height={210}>
                 <PieChart>
-                  <Pie data={categoriesData} dataKey="value" nameKey="name" outerRadius={65}>
+                  <Pie data={categoriesData} dataKey="value" nameKey="name" outerRadius={65} label={({ name, value }) => `${name}: ${value}`}>
                     {categoriesData.map((entry, idx) => <Cell key={`cell-pie-${idx}`} fill={entry.color} />)}
                   </Pie>
                   <Tooltip />
+                  <Legend />
                 </PieChart>
               </ResponsiveContainer>
               <div className="legend">
@@ -183,18 +200,18 @@ export default function Report({ analysis }) {
               <h4>Risk Breakdown</h4>
               <ResponsiveContainer width="100%" height={190}>
                 <PieChart>
-                  <Pie data={riskData} dataKey="value" nameKey="name" outerRadius={60} label>
+                  <Pie data={riskData} dataKey="value" nameKey="name" outerRadius={60} label={({ name, value }) => `${name}: ${value}`}>
                     {riskData.map((entry, idx) => <Cell key={entry.name} fill={entry.color} />)}
                   </Pie>
-                  <Legend />
                   <Tooltip />
+                  <Legend />
                 </PieChart>
               </ResponsiveContainer>
               {/* Detailed Risk List */}
               <div className="risk-details-list">
-                <div><span className="pill low"></span>Low: {reportData.risk_breakdown.Low}</div>
-                <div><span className="pill med"></span>Medium: {reportData.risk_breakdown.Medium}</div>
-                <div><span className="pill high"></span>High: {reportData.risk_breakdown.High}</div>
+                <div><span className="pill low"></span>Low: {riskBreakdown.Low}</div>
+                <div><span className="pill med"></span>Medium: {riskBreakdown.Medium}</div>
+                <div><span className="pill high"></span>High: {riskBreakdown.High}</div>
               </div>
             </div>
             <div className="chart-card">
@@ -214,26 +231,26 @@ export default function Report({ analysis }) {
         {/* Detailed Lists Section */}
         <motion.section className="details-section" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.20 }}>
           <div className="details-card">
-            <h4><FaKey style={{ marginRight: 8 }} />Password Hygiene Warnings ({reportData.password_hygiene_warnings.length})</h4>
-            {reportData.password_hygiene_warnings.length === 0 ? (
+            <h4><FaKey style={{ marginRight: 8 }} />Password Hygiene Warnings ({pwdWarnings.length})</h4>
+            {pwdWarnings.length === 0 ? (
               <p className="muted">No services flagged. 👍</p>
             ) : (
               <>
-                <ul className="list">{reportData.password_hygiene_warnings.map((svc, idx) => <li key={`pw-${idx}`}>{svc}</li>)}</ul>
-                <button className="mini-btn" onClick={() => exportList(reportData.password_hygiene_warnings, "password-warnings.csv")}>
+                <ul className="list">{pwdWarnings.map((svc, idx) => <li key={`pw-${idx}`}>{svc}</li>)}</ul>
+                <button className="mini-btn" onClick={() => exportList(pwdWarnings, "password-warnings.csv")}>
                   <FaDownload style={{ marginRight: 5 }} /> Export List
                 </button>
               </>
             )}
           </div>
           <div className="details-card">
-            <h4><FaExclamationCircle style={{ marginRight: 8 }} />Inactive Accounts ({reportData.inactive_accounts.length})</h4>
-            {reportData.inactive_accounts.length === 0 ? (
+            <h4><FaExclamationCircle style={{ marginRight: 8 }} />Inactive Accounts ({inactiveAccounts.length})</h4>
+            {inactiveAccounts.length === 0 ? (
               <p className="muted">No inactive accounts detected.</p>
             ) : (
               <>
-                <ul className="list">{reportData.inactive_accounts.map((svc, idx) => <li key={`inactive-${idx}`}>{svc}</li>)}</ul>
-                <button className="mini-btn" onClick={() => exportList(reportData.inactive_accounts, "inactive-accounts.csv")}>
+                <ul className="list">{inactiveAccounts.map((svc, idx) => <li key={`inactive-${idx}`}>{svc}</li>)}</ul>
+                <button className="mini-btn" onClick={() => exportList(inactiveAccounts, "inactive-accounts.csv")}>
                   <FaDownload style={{ marginRight: 5 }} /> Export List
                 </button>
               </>
@@ -242,7 +259,7 @@ export default function Report({ analysis }) {
         </motion.section>
 
         {/* Insights section */}
-        {Array.isArray(reportData.insights) && reportData.insights.length > 0 && (
+        {insights.length > 0 && (
           <section style={{ margin: "2.5rem auto 1.5rem auto", maxWidth: 900 }}>
             <div className="insights-card" style={{
               background: "#fff", borderRadius: 14, boxShadow: "0 2px 18px rgba(253,186,116,0.09)", padding: "1.5rem 2rem", margin: "1.3rem auto"
@@ -251,7 +268,7 @@ export default function Report({ analysis }) {
                 <FaLightbulb style={{ color: "#fbbf24" }} /> Insights & Warnings
               </h4>
               <ul style={{ marginTop: 13, marginBottom: 2 }}>
-                {reportData.insights.map((msg, idx) => (
+                {insights.map((msg, idx) => (
                   <li key={idx} style={{ margin: "0.3em 0", color: "#d97706", fontWeight: 600, fontSize: "1.03rem", display: "flex", alignItems: "center", gap: 8 }}>
                     <FaExclamationTriangle style={{ color: "#fb923c" }} /> {msg}
                   </li>
