@@ -1,7 +1,7 @@
 // src/utils/getPresignedUrl.js
 export async function getPresignedUrl(filename, contentType) {
   // ✅ Make sure this is your correct API Gateway URL (Production or Dev stage)
-  const apiEndpoint = "https://tw3uu6mzw9.execute-api.us-east-1.amazonaws.com/Prod/presign";
+  const apiEndpoint = "https://tw3uu6mzw9.execute-api.us-east-1.amazonaws.com/Prod";
   // Add `/presign` route if your Lambda is connected to that path
   const url = `${apiEndpoint}/presign?filename=${encodeURIComponent(filename)}&contentType=${encodeURIComponent(contentType)}`;
 
