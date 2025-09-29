@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import { getPresignedUrl } from "./utils/presign";
+import { getPresignedUrl } from "./utils/getPresignedUrl";
 
-function Upload() {
+export default function Upload() {
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState("");
@@ -12,19 +12,22 @@ function Upload() {
   };
 
   const handleUpload = async () => {
-    if (!file) return alert("Please choose a file first.");
+    if (!file) {
+      alert("Please choose a file first.");
+      return;
+    }
     setUploading(true);
     setMessage("");
 
     try {
       const contentType = file.type || "application/octet-stream";
+      setMessage("Getting upload URL...");
       const presignedUrl = await getPresignedUrl(file.name, contentType);
 
+      setMessage("Uploading file to S3...");
       const result = await fetch(presignedUrl, {
         method: "PUT",
-        headers: {
-          "Content-Type": contentType,
-        },
+        headers: { "Content-Type": contentType },
         body: file,
       });
 
@@ -32,7 +35,8 @@ function Upload() {
         throw new Error(`Upload failed: ${result.status} - ${await result.text()}`);
       }
 
-      setMessage("File uploaded to S3 successfully!");
+      setMessage("File uploaded to S3 successfully! Processing will start automatically.");
+      setFile(null);
     } catch (err) {
       console.error("Upload error:", err);
       setMessage(`Upload failed: ${err.message}`);
@@ -42,15 +46,13 @@ function Upload() {
   };
 
   return (
-    <div>
+    <div style={{ maxWidth: 420, margin: "0 auto", padding: 20 }}>
       <h2>Upload a File</h2>
-      <input type="file" onChange={handleChange} />
-      <button disabled={uploading} onClick={handleUpload}>
+      <input type="file" onChange={handleChange} accept=".csv,.json" />
+      <button disabled={uploading} onClick={handleUpload} style={{ marginLeft: 12 }}>
         {uploading ? "Uploading..." : "Upload"}
       </button>
-      {message && <p>{message}</p>}
+      {message && <p style={{ marginTop: 20 }}>{message}</p>}
     </div>
   );
 }
-
-export default Upload;
