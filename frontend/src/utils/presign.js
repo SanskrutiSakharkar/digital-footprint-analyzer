@@ -1,11 +1,20 @@
+// utils/getPresignedUrl.js
 export async function getPresignedUrl(filename, contentType) {
+  if (!filename) throw new Error("Filename is required");
+  if (!contentType) contentType = "application/octet-stream";
+
+  // API Gateway endpoint for presigned URL
   const apiEndpoint = "https://tw3uu6mzw9.execute-api.us-east-1.amazonaws.com/Prod/presign";
-  const url = `${apiEndpoint}?filename=${encodeURIComponent(filename)}&contentType=${encodeURIComponent(contentType)}`;
+
+  // Encode filename and content type properly
+  const url = new URL(apiEndpoint);
+  url.searchParams.append("filename", filename);
+  url.searchParams.append("contentType", contentType);
 
   let response;
   try {
-    response = await fetch(url);
-  } catch {
+    response = await fetch(url.toString());
+  } catch (err) {
     throw new Error("Network error: Unable to reach presign API");
   }
 
@@ -14,7 +23,13 @@ export async function getPresignedUrl(filename, contentType) {
     throw new Error(`Failed to get presigned URL: ${response.status} - ${errorBody}`);
   }
 
-  const data = await response.json();
+  let data;
+  try {
+    data = await response.json();
+  } catch {
+    throw new Error("Invalid JSON returned from presign API");
+  }
+
   if (!data.uploadUrl) throw new Error("No uploadUrl in presign API response");
 
   return data.uploadUrl;

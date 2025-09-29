@@ -1,5 +1,8 @@
+// src/pages/Upload.js
 import React, { useState } from "react";
 import { getPresignedUrl } from "../utils/presign";
+
+const ANALYZE_API_URL = "https://<your-analyze-api>.execute-api.us-east-1.amazonaws.com/Prod/analyze";
 
 export default function Upload() {
   const [file, setFile] = useState(null);
@@ -14,33 +17,52 @@ export default function Upload() {
   };
 
   const handleUpload = async () => {
-    if (!file) return alert("Please choose a file first.");
+    if (!file) {
+      alert("Please choose a file first.");
+      return;
+    }
 
     setUploading(true);
     setMessage("Getting presigned URL...");
     setReportData(null);
 
     try {
-      // Ensure Content-Type is correct
-      const contentType = file.type || "application/octet-stream";
-
-      // 1️⃣ Get presigned URL from Lambda
+      const contentType = file.name.endsWith(".csv") ? "text/csv" : "application/json";
+      // 1️⃣ Get presigned URL
       const presignedUrl = await getPresignedUrl(file.name, contentType);
 
       setMessage("Uploading file to S3...");
       // 2️⃣ Upload the file to S3
-      const result = await fetch(presignedUrl, {
+      const uploadResult = await fetch(presignedUrl, {
         method: "PUT",
         headers: { "Content-Type": contentType },
         body: file,
       });
+      if (!uploadResult.ok) {
+        throw new Error(`Upload failed: ${uploadResult.status}`);
+      }
 
-      if (!result.ok) throw new Error(`Upload failed: ${result.status}`);
+      setMessage("File uploaded! Triggering analysis...");
 
-      setMessage("File uploaded! Waiting for report...");
-      pollForReport(file.name); // 3️⃣ Poll for JSON report
+      // 3️⃣ Trigger analyze Lambda (optional if S3 event triggers it)
+      const analyzeRes = await fetch(ANALYZE_API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          // Replace with actual Cognito token if needed
+          // "Authorization": idToken
+        },
+        body: JSON.stringify({ filename: file.name }),
+      });
+
+      if (!analyzeRes.ok) {
+        throw new Error(`Analyze API failed: ${analyzeRes.status}`);
+      }
+
+      setMessage("Analysis started. Waiting for report...");
+      pollForReport(file.name); // 4️⃣ Start polling for the report
+
       setFile(null);
-
     } catch (err) {
       console.error("Upload error:", err);
       setMessage(`Upload failed: ${err.message}`);
@@ -49,13 +71,16 @@ export default function Upload() {
     }
   };
 
+  // 4️⃣ Poll S3 for the report (retry up to 10 times)
   const pollForReport = async (filename, attempt = 0) => {
     if (!filename || attempt > 10) {
       setMessage("Report not ready after multiple attempts.");
       return;
     }
 
-    const reportUrl = `https://digital-footprint-analyzer.s3.amazonaws.com/reports/${encodeURIComponent(filename)}_report.json`;
+    const reportUrl = `https://digital-footprint-analyzer.s3.amazonaws.com/reports/${encodeURIComponent(
+      filename
+    )}_report.json`;
 
     try {
       const res = await fetch(reportUrl);
@@ -66,7 +91,7 @@ export default function Upload() {
       } else {
         setTimeout(() => pollForReport(filename, attempt + 1), 3000);
       }
-    } catch {
+    } catch (err) {
       setTimeout(() => pollForReport(filename, attempt + 1), 3000);
     }
   };
