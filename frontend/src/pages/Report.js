@@ -6,6 +6,10 @@ import {
 const COLORS = ['#2563eb', '#38bdf8', '#94a3b8'];
 
 const Report = ({ data }) => {
+  if (!data || data.length === 0) {
+    return <div className="report-charts"><p>🔄 Loading report data...</p></div>;
+  }
+
   const categoryData = {};
   const signupDataByYear = {};
   const signupDataByMonth = {};
@@ -14,10 +18,11 @@ const Report = ({ data }) => {
     const category = entry.category || 'Uncategorized';
     categoryData[category] = (categoryData[category] || 0) + 1;
 
-    if (entry.signup_date) {
-      const date = new Date(entry.signup_date);
+    const rawDate = entry.created || entry.signup_date || entry.created_on;
+    if (rawDate) {
+      const date = new Date(rawDate);
       const year = date.getFullYear();
-      const month = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      const month = `${year}-${String(date.getMonth() + 1).padStart(2, '0')}`;
 
       signupDataByYear[year] = (signupDataByYear[year] || 0) + 1;
       signupDataByMonth[month] = (signupDataByMonth[month] || 0) + 1;
@@ -25,8 +30,13 @@ const Report = ({ data }) => {
   });
 
   const categoryChartData = Object.entries(categoryData).map(([name, count]) => ({ name, count }));
-  const yearChartData = Object.entries(signupDataByYear).map(([year, count]) => ({ year, count }));
-  const monthChartData = Object.entries(signupDataByMonth).map(([month, count]) => ({ month, count }));
+  const yearChartData = Object.entries(signupDataByYear)
+    .map(([year, count]) => ({ year: parseInt(year), count }))
+    .sort((a, b) => a.year - b.year);
+
+  const monthChartData = Object.entries(signupDataByMonth)
+    .map(([month, count]) => ({ month, count }))
+    .sort((a, b) => new Date(a.month) - new Date(b.month));
 
   return (
     <div className="report-charts">
@@ -38,7 +48,7 @@ const Report = ({ data }) => {
               <XAxis type="number" />
               <YAxis dataKey="name" type="category" />
               <Tooltip />
-              <Bar dataKey="count" fill="#2563eb" />
+              <Bar dataKey="count" fill="#2563eb" label={{ position: "right" }} />
             </BarChart>
           </ResponsiveContainer>
         </div>
