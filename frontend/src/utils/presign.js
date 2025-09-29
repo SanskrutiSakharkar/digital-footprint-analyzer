@@ -1,11 +1,9 @@
 // utils/presign.js
 export async function getPresignedUrl(filename, contentType) {
-  // ✅ Your API Gateway endpoint
-  const apiEndpoint = "https://tw3uu6mzw9.execute-api.us-east-1.amazonaws.com/Prod";
+  const apiEndpoint = "https://tw3uu6mzw9.execute-api.us-east-1.amazonaws.com/Prod/presign";
   const url = `${apiEndpoint}/presign?filename=${encodeURIComponent(filename)}&contentType=${encodeURIComponent(contentType)}`;
 
-  let response, data;
-
+  let response;
   try {
     response = await fetch(url);
   } catch (err) {
@@ -21,6 +19,7 @@ export async function getPresignedUrl(filename, contentType) {
     throw new Error(errorMsg);
   }
 
+  let data;
   try {
     data = await response.json();
   } catch (err) {
@@ -28,6 +27,5 @@ export async function getPresignedUrl(filename, contentType) {
   }
 
   if (!data.uploadUrl) throw new Error("No uploadUrl in presign API response");
-
   return data.uploadUrl;
 }
