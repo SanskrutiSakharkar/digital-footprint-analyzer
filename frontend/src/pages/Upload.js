@@ -40,7 +40,6 @@ export default function Upload() {
 
       setMessage("File uploaded! Waiting for report...");
       pollForReport(file.name);
-
       setFile(null);
     } catch (err) {
       console.error("Upload error:", err);
@@ -50,7 +49,6 @@ export default function Upload() {
     }
   };
 
-  // Poll S3 for the report
   const pollForReport = async (filename, attempt = 0) => {
     if (!filename || attempt > 10) {
       setMessage("Report not ready after multiple attempts.");
