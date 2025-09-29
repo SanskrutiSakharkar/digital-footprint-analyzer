@@ -1,5 +1,5 @@
 export async function getPresignedUrl(filename, contentType) {
-  const apiEndpoint = "https://ckbvqpr5s4.execute-api.us-east-1.amazonaws.com/Dev/presign";
+  const apiEndpoint = "https://tw3uu6mzw9.execute-api.us-east-1.amazonaws.com/Prod";
   const url = `${apiEndpoint}?filename=${encodeURIComponent(filename)}&contentType=${encodeURIComponent(contentType)}`;
 
   const response = await fetch(url);
