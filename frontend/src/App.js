@@ -2,33 +2,37 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
+// UI Components
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 
+// Pages
 import Home from "./pages/Home";
-import Report from "./pages/Report";
 import Upload from "./pages/Upload";
+import Report from "./pages/Report";
+import CompareReports from "./pages/CompareReports";
 import Profile from "./pages/Profile";
 import About from "./pages/About";
 import NotFound from "./pages/NotFound";
-import CompareReports from "./pages/CompareReports";
 
+// AWS Amplify v6+
 import { Amplify } from "aws-amplify";
 import { withAuthenticator } from "@aws-amplify/ui-react";
 import "@aws-amplify/ui-react/styles.css";
 import { Hub } from "aws-amplify/utils";
 
-// ✅ Amplify v6+ configuration (no default Auth export)
+// ✅ Configure Amplify Auth (v6+)
 Amplify.configure({
   Auth: {
     Cognito: {
       region: "us-east-1",
       userPoolId: "us-east-1_OilL5RBTl",
-      userPoolClientId: "6mmnueqgb88kc5dt97lt56l97h", // public SPA client
+      userPoolClientId: "6mmnueqgb88kc5dt97lt56l97h", // SPA client
     },
   },
 });
 
+// ✅ Debug auth events (optional)
 Hub.listen("auth", ({ payload }) => {
   console.log("[Auth event]", payload.event, payload.data);
 });
@@ -51,8 +55,8 @@ function App() {
   );
 }
 
-// Ask for name at signup so Profile can show it; you can pare this down if needed.
+// ✅ Export app wrapped with Cognito UI Auth
 export default withAuthenticator(App, {
-  loginMechanisms: ["username", "email"],
-  signUpAttributes: ["email", "name"],
+  loginMechanisms: ["email", "username"], // allow login via both
+  signUpAttributes: ["email", "name"], // ask for name at signup
 });
