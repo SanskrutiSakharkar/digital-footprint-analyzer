@@ -1,8 +1,16 @@
+// src/utils/presign.js
+
 export async function getPresignedUrl(filename, contentType) {
-  const res = await fetch(
-    `https://bc3gkr4896.execute-api.us-east-1.amazonaws.com/Dev/presign?filename=${encodeURIComponent(filename)}&contentType=${contentType}`
-  );
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || "Failed to get URL");
+  const apiEndpoint = "https://<your-api-id>.execute-api.us-east-1.amazonaws.com/Dev/presign";
+
+  const url = `${apiEndpoint}?filename=${encodeURIComponent(filename)}&contentType=${encodeURIComponent(contentType)}`;
+
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    throw new Error("Failed to get presigned URL");
+  }
+
+  const data = await response.json();
   return data.uploadUrl;
 }

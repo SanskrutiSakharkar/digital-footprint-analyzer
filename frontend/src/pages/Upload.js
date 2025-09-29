@@ -8,6 +8,7 @@ function Upload() {
 
   const handleChange = (e) => {
     setFile(e.target.files[0]);
+    setMessage(""); // reset
   };
 
   const handleUpload = async () => {
@@ -17,9 +18,9 @@ function Upload() {
 
     try {
       const contentType = file.type || "application/octet-stream";
-      const uploadUrl = await getPresignedUrl(file.name, contentType);
+      const presignedUrl = await getPresignedUrl(file.name, contentType);
 
-      const result = await fetch(uploadUrl, {
+      const result = await fetch(presignedUrl, {
         method: "PUT",
         headers: {
           "Content-Type": contentType
@@ -27,15 +28,17 @@ function Upload() {
         body: file
       });
 
-      if (!result.ok) throw new Error(`Upload failed: ${result.status}`);
+      if (!result.ok) {
+        throw new Error(`Upload failed: ${result.status} - ${await result.text()}`);
+      }
 
-      setMessage("File uploaded successfully!");
+      setMessage("✅ File uploaded to S3 successfully!");
     } catch (err) {
       console.error("Upload error:", err);
-      setMessage(`Error: ${err.message}`);
+      setMessage(`❌ Upload failed: ${err.message}`);
+    } finally {
+      setUploading(false);
     }
-
-    setUploading(false);
   };
 
   return (
