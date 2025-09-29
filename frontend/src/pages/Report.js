@@ -14,7 +14,6 @@ const PALETTE = [
   "#2563eb", "#38bdf8", "#fbbf24", "#ef4444", "#0ea5e9", "#b6d0fa", "#14213d", "#fca311", "#0d9488"
 ];
 
-// Fallback if nothing is uploaded (for demo)
 const FALLBACK_ANALYSIS = {
   total_accounts: 19,
   oldest_account: "2012-03-12",
@@ -33,7 +32,6 @@ const FALLBACK_ANALYSIS = {
 };
 
 export default function Report(props) {
-  // 1. Get report data: navigation, props, or localStorage fallback
   const location = useLocation();
   const navAnalysis = location.state?.analysis;
   const propAnalysis = props.analysis;
@@ -45,7 +43,7 @@ export default function Report(props) {
     lsAnalysis && typeof lsAnalysis === "object" && Object.keys(lsAnalysis).length > 0 ? lsAnalysis :
     FALLBACK_ANALYSIS;
 
-  // 2. Memoize all objects for chart/data useMemo calls
+  // Memoized data
   const pwdWarnings = useMemo(() => analysis.password_hygiene_warnings || [], [analysis]);
   const inactiveAccounts = useMemo(() => analysis.inactive_accounts || [], [analysis]);
   const riskBreakdown = useMemo(() => analysis.risk_breakdown || { Low: 0, Medium: 0, High: 0 }, [analysis]);
@@ -53,7 +51,7 @@ export default function Report(props) {
   const accountsByCategory = useMemo(() => analysis.accounts_by_category || {}, [analysis]);
   const insights = useMemo(() => analysis.insights || [], [analysis]);
 
-  // 3. All chart/section data
+  // Chart data
   const categoriesData = useMemo(() => (
     Object.entries(accountsByCategory).map(([name, value], i) => ({
       name, value, color: PALETTE[i % PALETTE.length]
@@ -81,7 +79,7 @@ export default function Report(props) {
     return rows;
   }, [analysis]);
 
-  // 4. Highlights row
+  // Highlights row
   const highlights = [
     { icon: <FaUserClock color="#fca311" />, label: "Oldest Account", value: analysis.oldest_account || "—" },
     { icon: <FaKey color="#2563eb" />, label: "Password Warnings", value: pwdWarnings.length },
@@ -89,7 +87,7 @@ export default function Report(props) {
     { icon: <FaChartPie color="#0d9488" />, label: "Top Category", value: Object.keys(accountsByCategory || {})[0] || "—" }
   ];
 
-  // 5. CSV/PDF export
+  // Export
   const reportRef = useRef();
   const downloadCSV = () => {
     const csv = [
@@ -114,7 +112,6 @@ export default function Report(props) {
     pdf.addImage(imgData, "PNG", 0, 20, canvas.width * ratio, canvas.height * ratio);
     pdf.save("analysis-report.pdf");
   }
-  // Export password/inactive lists
   const exportList = (items, file) => {
     const csv = items.map(x => `"${x}"`).join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
@@ -162,18 +159,23 @@ export default function Report(props) {
               <h4>Account Type Share</h4>
               <ResponsiveContainer width="100%" height={210}>
                 <PieChart>
-                  <Pie data={categoriesData} dataKey="value" nameKey="name" outerRadius={65} label={({ name, value }) => `${name}: ${value}`}>
+                  <Pie
+                    data={categoriesData}
+                    dataKey="value"
+                    nameKey="name"
+                    outerRadius={70}
+                    // Remove all labels for clean, overlap-free chart
+                  >
                     {categoriesData.map((entry, idx) => <Cell key={`cell-pie-${idx}`} fill={entry.color} />)}
                   </Pie>
                   <Tooltip />
-                  <Legend />
                 </PieChart>
               </ResponsiveContainer>
               <div className="legend">
                 {categoriesData.map((entry, idx) => (
                   <div key={`legend-${idx}`} className="legend-item">
                     <span className="legend-color" style={{ backgroundColor: entry.color }} />
-                    {entry.name} ({entry.value})
+                    {entry.name} <span style={{ color: "#7b7b7b" }}>({entry.value})</span>
                   </div>
                 ))}
               </div>
@@ -200,14 +202,18 @@ export default function Report(props) {
               <h4>Risk Breakdown</h4>
               <ResponsiveContainer width="100%" height={190}>
                 <PieChart>
-                  <Pie data={riskData} dataKey="value" nameKey="name" outerRadius={60} label={({ name, value }) => `${name}: ${value}`}>
+                  <Pie
+                    data={riskData}
+                    dataKey="value"
+                    nameKey="name"
+                    outerRadius={60}
+                    // Remove all labels for clean, overlap-free chart
+                  >
                     {riskData.map((entry, idx) => <Cell key={entry.name} fill={entry.color} />)}
                   </Pie>
                   <Tooltip />
-                  <Legend />
                 </PieChart>
               </ResponsiveContainer>
-              {/* Detailed Risk List */}
               <div className="risk-details-list">
                 <div><span className="pill low"></span>Low: {riskBreakdown.Low}</div>
                 <div><span className="pill med"></span>Medium: {riskBreakdown.Medium}</div>
