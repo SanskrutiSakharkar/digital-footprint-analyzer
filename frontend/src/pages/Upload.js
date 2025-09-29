@@ -7,12 +7,14 @@ export default function Upload() {
   const [message, setMessage] = useState("");
   const [reportData, setReportData] = useState(null);
 
+  // Handle file selection
   const handleChange = (e) => {
     setFile(e.target.files[0]);
     setMessage("");
     setReportData(null);
   };
 
+  // Upload file to S3 using presigned URL
   const handleUpload = async () => {
     if (!file) {
       alert("Please choose a file first.");
@@ -24,23 +26,26 @@ export default function Upload() {
 
     try {
       const contentType = file.type || "application/octet-stream";
-      setMessage("Getting upload URL...");
+      setMessage("Getting presigned URL...");
       const presignedUrl = await getPresignedUrl(file.name, contentType);
 
       setMessage("Uploading file to S3...");
       const result = await fetch(presignedUrl, {
         method: "PUT",
-        headers: { "Content-Type": contentType },
+        headers: {
+          "Content-Type": contentType,
+        },
         body: file,
       });
 
       if (!result.ok) {
-        throw new Error(`Upload failed: ${result.status} - ${await result.text()}`);
+        throw new Error(
+          `Upload failed: ${result.status} - ${await result.text()}`
+        );
       }
 
       setMessage("File uploaded! Processing your report...");
       pollForReport(file.name); // Start polling for the report
-
       setFile(null);
     } catch (err) {
       console.error("Upload error:", err);
@@ -53,6 +58,7 @@ export default function Upload() {
   // Poll for the report in S3
   const pollForReport = async (filename, attempt = 0) => {
     if (!filename) return;
+
     const reportUrl =
       "https://digital-footprint-analyzer.s3.amazonaws.com/reports/" +
       encodeURIComponent(filename) +
@@ -65,15 +71,20 @@ export default function Upload() {
         setReportData(data);
         setMessage("Report is ready!");
       } else if (attempt < 10) {
+        // Retry every 3 seconds, up to 10 times (~30s)
         setTimeout(() => pollForReport(filename, attempt + 1), 3000);
       } else {
-        setMessage("Report not ready after waiting. Please check again later.");
+        setMessage(
+          "Report not ready after waiting. Please check again later."
+        );
       }
     } catch (err) {
       if (attempt < 10) {
         setTimeout(() => pollForReport(filename, attempt + 1), 3000);
       } else {
-        setMessage("Report not ready after waiting. Please check again later.");
+        setMessage(
+          "Report not ready after waiting. Please check again later."
+        );
       }
     }
   };
@@ -82,10 +93,16 @@ export default function Upload() {
     <div style={{ maxWidth: 420, margin: "0 auto", padding: 20 }}>
       <h2>Upload a File</h2>
       <input type="file" onChange={handleChange} accept=".csv,.json" />
-      <button disabled={uploading} onClick={handleUpload} style={{ marginLeft: 12 }}>
+      <button
+        disabled={uploading}
+        onClick={handleUpload}
+        style={{ marginLeft: 12 }}
+      >
         {uploading ? "Uploading..." : "Upload"}
       </button>
+
       {message && <p style={{ marginTop: 20 }}>{message}</p>}
+
       {reportData && (
         <div style={{ marginTop: 20 }}>
           <h3>Analysis Report</h3>
