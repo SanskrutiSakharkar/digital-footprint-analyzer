@@ -19,20 +19,18 @@ import NotFound from "./pages/NotFound";
 import { Amplify } from "aws-amplify";
 import { withAuthenticator } from "@aws-amplify/ui-react";
 import "@aws-amplify/ui-react/styles.css";
-import { Hub } from "aws-amplify/utils";
+import { Hub } from "aws-amplify";
 
 // ✅ Configure Amplify Auth (v6+)
 Amplify.configure({
   Auth: {
-    Cognito: {
-      region: "us-east-1",
-      userPoolId: "us-east-1_OilL5RBTl",
-      userPoolClientId: "6mmnueqgb88kc5dt97lt56l97h", // SPA client
-    },
+    region: "us-east-1",
+    userPoolId: "us-east-1_OilL5RBTl",
+    userPoolClientId: "6mmnueqgb88kc5dt97lt56l97h", // SPA client
   },
 });
 
-// ✅ Debug auth events (optional)
+// ✅ Optional: Debug auth events
 Hub.listen("auth", ({ payload }) => {
   console.log("[Auth event]", payload.event, payload.data);
 });
@@ -55,8 +53,8 @@ function App() {
   );
 }
 
-// ✅ Export app wrapped with Cognito UI Auth
+// ✅ Wrap app with Cognito Auth UI
 export default withAuthenticator(App, {
-  loginMechanisms: ["email", "username"], // allow login via both
-  signUpAttributes: ["email", "name"], // ask for name at signup
+  loginMechanisms: ["email", "username"], // login via email or username
+  signUpAttributes: ["email", "name"],    // ask for name at signup
 });

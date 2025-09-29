@@ -1,5 +1,6 @@
+// src/pages/Upload.js
 import React, { useState } from "react";
-import { getPresignedUrl } from "./utils/getPresignedUrl";
+import { getPresignedUrl } from "../utils/getPresignedUrl";
 
 export default function Upload() {
   const [file, setFile] = useState(null);
@@ -7,45 +8,43 @@ export default function Upload() {
   const [message, setMessage] = useState("");
   const [reportData, setReportData] = useState(null);
 
-  // Handle file selection
   const handleChange = (e) => {
     setFile(e.target.files[0]);
     setMessage("");
     setReportData(null);
   };
 
-  // Upload file to S3 using presigned URL
   const handleUpload = async () => {
     if (!file) {
       alert("Please choose a file first.");
       return;
     }
+
     setUploading(true);
-    setMessage("");
+    setMessage("Getting presigned URL...");
     setReportData(null);
 
     try {
       const contentType = file.type || "application/octet-stream";
-      setMessage("Getting presigned URL...");
+
+      // 1️⃣ Get presigned URL
       const presignedUrl = await getPresignedUrl(file.name, contentType);
 
       setMessage("Uploading file to S3...");
+      // 2️⃣ Upload the file
       const result = await fetch(presignedUrl, {
         method: "PUT",
-        headers: {
-          "Content-Type": contentType,
-        },
+        headers: { "Content-Type": contentType },
         body: file,
       });
 
       if (!result.ok) {
-        throw new Error(
-          `Upload failed: ${result.status} - ${await result.text()}`
-        );
+        throw new Error(`Upload failed: ${result.status}`);
       }
 
-      setMessage("File uploaded! Processing your report...");
-      pollForReport(file.name); // Start polling for the report
+      setMessage("File uploaded! Waiting for report...");
+      pollForReport(file.name); // 3️⃣ Start polling
+
       setFile(null);
     } catch (err) {
       console.error("Upload error:", err);
@@ -55,14 +54,16 @@ export default function Upload() {
     }
   };
 
-  // Poll for the report in S3
+  // 4️⃣ Poll for report in S3 (retry up to 10 times)
   const pollForReport = async (filename, attempt = 0) => {
-    if (!filename) return;
+    if (!filename || attempt > 10) {
+      setMessage("Report not ready after multiple attempts.");
+      return;
+    }
 
-    const reportUrl =
-      "https://digital-footprint-analyzer.s3.amazonaws.com/reports/" +
-      encodeURIComponent(filename) +
-      "_report.json";
+    const reportUrl = `https://digital-footprint-analyzer.s3.amazonaws.com/reports/${encodeURIComponent(
+      filename
+    )}_report.json`;
 
     try {
       const res = await fetch(reportUrl);
@@ -70,27 +71,16 @@ export default function Upload() {
         const data = await res.json();
         setReportData(data);
         setMessage("Report is ready!");
-      } else if (attempt < 10) {
-        // Retry every 3 seconds, up to 10 times (~30s)
-        setTimeout(() => pollForReport(filename, attempt + 1), 3000);
       } else {
-        setMessage(
-          "Report not ready after waiting. Please check again later."
-        );
+        setTimeout(() => pollForReport(filename, attempt + 1), 3000);
       }
     } catch (err) {
-      if (attempt < 10) {
-        setTimeout(() => pollForReport(filename, attempt + 1), 3000);
-      } else {
-        setMessage(
-          "Report not ready after waiting. Please check again later."
-        );
-      }
+      setTimeout(() => pollForReport(filename, attempt + 1), 3000);
     }
   };
 
   return (
-    <div style={{ maxWidth: 420, margin: "0 auto", padding: 20 }}>
+    <div style={{ maxWidth: 500, margin: "0 auto", padding: 20 }}>
       <h2>Upload a File</h2>
       <input type="file" onChange={handleChange} accept=".csv,.json" />
       <button
@@ -110,11 +100,9 @@ export default function Upload() {
             {JSON.stringify(reportData, null, 2)}
           </pre>
           <a
-            href={
-              "https://digital-footprint-analyzer.s3.amazonaws.com/reports/" +
-              encodeURIComponent(reportData.source_file.split("/").pop()) +
-              "_report.json"
-            }
+            href={`https://digital-footprint-analyzer.s3.amazonaws.com/reports/${encodeURIComponent(
+              reportData.source_file.split("/").pop()
+            )}_report.json`}
             target="_blank"
             rel="noopener noreferrer"
             style={{ color: "#2563eb" }}
