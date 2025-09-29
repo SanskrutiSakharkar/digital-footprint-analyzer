@@ -1,12 +1,7 @@
-// utils/getPresignedUrl.js
 export async function getPresignedUrl(filename, contentType) {
-  if (!filename) throw new Error("Filename is required");
-  if (!contentType) contentType = "application/octet-stream";
-
-  // API Gateway endpoint for presigned URL
   const apiEndpoint = "https://tw3uu6mzw9.execute-api.us-east-1.amazonaws.com/Prod/presign";
 
-  // Encode filename and content type properly
+  // Create URL object and append query params
   const url = new URL(apiEndpoint);
   url.searchParams.append("filename", filename);
   url.searchParams.append("contentType", contentType);
