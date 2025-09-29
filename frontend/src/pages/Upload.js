@@ -1,6 +1,6 @@
-// src/pages/Upload.js
+// pages/Upload.js
 import React, { useState } from "react";
-import { getPresignedUrl } from "../utils/getPresignedUrl";
+import { getPresignedUrl } from "../utils/presign";
 
 export default function Upload() {
   const [file, setFile] = useState(null);
@@ -27,11 +27,11 @@ export default function Upload() {
     try {
       const contentType = file.type || "application/octet-stream";
 
-      // 1️⃣ Get presigned URL
+      // 1️⃣ Get presigned URL from API
       const presignedUrl = await getPresignedUrl(file.name, contentType);
 
       setMessage("Uploading file to S3...");
-      // 2️⃣ Upload the file
+      // 2️⃣ Upload the file directly to S3
       const result = await fetch(presignedUrl, {
         method: "PUT",
         headers: { "Content-Type": contentType },
@@ -39,7 +39,7 @@ export default function Upload() {
       });
 
       if (!result.ok) {
-        throw new Error(`Upload failed: ${result.status}`);
+        throw new Error(`Upload failed: ${result.status} - ${await result.text()}`);
       }
 
       setMessage("File uploaded! Waiting for report...");
@@ -54,16 +54,14 @@ export default function Upload() {
     }
   };
 
-  // 4️⃣ Poll for report in S3 (retry up to 10 times)
+  // 4️⃣ Poll for the report JSON in S3 (retry up to 10 times)
   const pollForReport = async (filename, attempt = 0) => {
     if (!filename || attempt > 10) {
       setMessage("Report not ready after multiple attempts.");
       return;
     }
 
-    const reportUrl = `https://digital-footprint-analyzer.s3.amazonaws.com/reports/${encodeURIComponent(
-      filename
-    )}_report.json`;
+    const reportUrl = `https://digital-footprint-analyzer.s3.amazonaws.com/reports/${encodeURIComponent(filename)}_report.json`;
 
     try {
       const res = await fetch(reportUrl);
@@ -83,11 +81,7 @@ export default function Upload() {
     <div style={{ maxWidth: 500, margin: "0 auto", padding: 20 }}>
       <h2>Upload a File</h2>
       <input type="file" onChange={handleChange} accept=".csv,.json" />
-      <button
-        disabled={uploading}
-        onClick={handleUpload}
-        style={{ marginLeft: 12 }}
-      >
+      <button disabled={uploading} onClick={handleUpload} style={{ marginLeft: 12 }}>
         {uploading ? "Uploading..." : "Upload"}
       </button>
 
