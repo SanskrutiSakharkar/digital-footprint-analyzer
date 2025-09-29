@@ -65,7 +65,6 @@ export default function Upload() {
         setReportData(data);
         setMessage("Report is ready!");
       } else if (attempt < 10) {
-        // Try again after 3 seconds (up to 10 tries, ~30 seconds)
         setTimeout(() => pollForReport(filename, attempt + 1), 3000);
       } else {
         setMessage("Report not ready after waiting. Please check again later.");
